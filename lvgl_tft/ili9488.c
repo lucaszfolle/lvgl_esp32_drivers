@@ -14,6 +14,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+/* So I can access the display struct internals */
+#include "src/display/lv_display_private.h"
 /*********************
  *      DEFINES
  *********************/
@@ -122,36 +124,54 @@ void ili9488_init(void)
 
 // Flush function based on mvturnho repo
 // https://github.com/lvgl/lvgl_esp32_drivers/issues/116 -> heap +3 to avoid display artifacts
-void ili9488_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_map)
+void ili9488_flush(lv_display_t * disp, const lv_area_t * area, uint8_t * px_map)
 {
-    uint32_t size = lv_area_get_width(area) * lv_area_get_height(area);
+    const uint32_t size = lv_area_get_width(area) * lv_area_get_height(area);
+	const uint16_t *p_buf16 = (uint16_t *)px_map;
+	const uint8_t *p_flush_start = NULL;
+	const struct _lv_display_t *p_display = disp;
 
-    lv_color16_t *buffer_16bit = (lv_color16_t *) color_map;
-    uint8_t *mybuf;
-    do {
-        mybuf = (uint8_t *) heap_caps_malloc(3 * size * sizeof(uint8_t) + 3, MALLOC_CAP_DMA);
-        if (mybuf == NULL)  ESP_LOGW(TAG, "Could not allocate enough DMA memory!");
-    } while (mybuf == NULL);
-
-    uint32_t LD = 0;
-    uint32_t j = 0;
-
-    for (uint32_t i = 0; i < size; i++) {
-        LD = buffer_16bit[i].full;
-        mybuf[j] = (uint8_t) (((LD & 0xF800) >> 8) | ((LD & 0x8000) >> 13));
-        j++;
-        mybuf[j] = (uint8_t) ((LD & 0x07E0) >> 3);
-        j++;
-        mybuf[j] = (uint8_t) (((LD & 0x001F) << 3) | ((LD & 0x0010) >> 2));
-        j++;
-    }
+	/* Currently sending the buffer 1 */
+	if (px_map == p_display->buf_1->data)
+	{
+		/* Starts from the last pixel, storing the result from the half-buffer's end */
+		uint8_t *p_dstbuf = (px_map + ((p_display->buf_1->data_size * 3) / 2));
+		p_buf16 += size;
+		p_flush_start = px_map;
+		for (uint32_t ii = 0u; ii < size; ++ii)
+		{
+    		const uint32_t color = *--p_buf16;
+			*--p_dstbuf = (uint8_t) (((color & 0x001F) << 3) | ((color & 0x0010) >> 2));
+			*--p_dstbuf = (uint8_t) ((color & 0x07E0) >> 3);
+			*--p_dstbuf = (uint8_t) (((color & 0xF800) >> 8) | ((color & 0x8000) >> 13));
+		}
+	}
+	/* Currently sending the buffer 2 */
+	else if (px_map == p_display->buf_2->data)
+	{
+		/* Starts from the first pixel, storing the result from the beginning of the half-buffer */
+		uint8_t *p_dstbuf = (px_map - (p_display->buf_2->data_size / 2));
+		p_flush_start = p_dstbuf;
+		for (uint32_t ii = 0u; ii < size; ++ii)
+		{
+			const uint32_t color = *p_buf16++;
+			*p_dstbuf++ = (uint8_t) (((color & 0xF800) >> 8) | ((color & 0x8000) >> 13));
+			*p_dstbuf++ = (uint8_t) ((color & 0x07E0) >> 3);
+			*p_dstbuf++ = (uint8_t) (((color & 0x001F) << 3) | ((color & 0x0010) >> 2));
+		}
+	}
+	else
+	{
+		ESP_LOGE(TAG, "px_map is not equal to any buffer start");
+		return;
+	}
 
 	/* Column addresses  */
 	uint8_t xb[] = {
 	    (uint8_t) (area->x1 >> 8) & 0xFF,
 	    (uint8_t) (area->x1) & 0xFF,
 	    (uint8_t) (area->x2 >> 8) & 0xFF,
-	    (uint8_t) (area->x2) & 0xFF,
+	    (uint8_t) (area->x2) & 0xFF
 	};
 
 	/* Page addresses  */
@@ -159,7 +179,7 @@ void ili9488_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * col
 	    (uint8_t) (area->y1 >> 8) & 0xFF,
 	    (uint8_t) (area->y1) & 0xFF,
 	    (uint8_t) (area->y2 >> 8) & 0xFF,
-	    (uint8_t) (area->y2) & 0xFF,
+	    (uint8_t) (area->y2) & 0xFF
 	};
 
 	/*Column addresses*/
@@ -172,9 +192,7 @@ void ili9488_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * col
 
 	/*Memory write*/
 	ili9488_send_cmd(ILI9488_CMD_MEMORY_WRITE);
-
-	ili9488_send_color((void *) mybuf, size * 3);
-	heap_caps_free(mybuf);
+	ili9488_send_color((void *)p_flush_start, size * 3);
 }
 
 /**********************

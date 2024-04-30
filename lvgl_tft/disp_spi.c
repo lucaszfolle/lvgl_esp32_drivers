@@ -85,7 +85,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void IRAM_ATTR spi_ready (spi_transaction_t *trans);
+static void spi_ready (spi_transaction_t *trans);
 
 /**********************
  *  STATIC VARIABLES
@@ -302,7 +302,7 @@ static void IRAM_ATTR spi_ready(spi_transaction_t *trans)
     disp_spi_send_flag_t flags = (disp_spi_send_flag_t) trans->user;
 
     if (flags & DISP_SPI_SIGNAL_FLUSH) {
-        lv_disp_t * disp = NULL;
+        lv_display_t * disp = NULL;
 
 #if (LVGL_VERSION_MAJOR >= 7)
         disp = _lv_refr_get_disp_refreshing();
@@ -313,7 +313,7 @@ static void IRAM_ATTR spi_ready(spi_transaction_t *trans)
 #if LVGL_VERSION_MAJOR < 8
         lv_disp_flush_ready(&disp->driver);
 #else
-        lv_disp_flush_ready(disp->driver);
+        lv_disp_flush_ready(disp);
 #endif
 
     }

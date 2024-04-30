@@ -57,8 +57,8 @@ extern "C" {
  * When using the mono theme, the display pixels can be represented in one bit,
  * so the buffer size can be divided by 8, e.g. see SSD1306 display size. */
 
-#define TFT_DISPLAY_BUFFER_SIZE_IN_BITS (LV_HOR_RES_MAX * 40 * 3 * 8)
-#define TFT_DISPLAY_BUFFER_SIZE (LV_HOR_RES_MAX * 40)
+#define TFT_DISPLAY_BUFFER_SIZE (LV_HOR_RES_MAX * LV_VER_RES_MAX / 10)
+#define TFT_DISPLAY_BUFFER_SIZE_IN_BITS (TFT_DISPLAY_BUFFER_SIZE * 3 * 8)
 
 #if CONFIG_IDF_TARGET_ESP32S3 
     #define DMA_MAX_BIT_LENGHT (1<<18) // according with SPI_LL_DMA_MAX_BIT_LEN in spi_ll.h
