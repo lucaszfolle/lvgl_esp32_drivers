@@ -300,6 +300,7 @@ void disp_spi_release(void)
 static void IRAM_ATTR spi_ready(spi_transaction_t *trans)
 {
     disp_spi_send_flag_t flags = (disp_spi_send_flag_t) trans->user;
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
     if (flags & DISP_SPI_SIGNAL_FLUSH) {
         lv_display_t * disp = NULL;
@@ -314,6 +315,12 @@ static void IRAM_ATTR spi_ready(spi_transaction_t *trans)
         lv_disp_flush_ready(&disp->driver);
 #else
         lv_disp_flush_ready(disp);
+        if (disp->user_data != NULL)
+        {
+            vTaskNotifyGiveIndexedFromISR((TaskHandle_t)disp->user_data,
+                                          1,
+                                          &xHigherPriorityTaskWoken);
+        }
 #endif
 
     }
@@ -321,5 +328,7 @@ static void IRAM_ATTR spi_ready(spi_transaction_t *trans)
     if (chained_post_cb) {
         chained_post_cb(trans);
     }
+
+    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
 
