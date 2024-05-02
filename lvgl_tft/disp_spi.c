@@ -315,9 +315,10 @@ static void IRAM_ATTR spi_ready(spi_transaction_t *trans)
         lv_disp_flush_ready(&disp->driver);
 #else
         lv_disp_flush_ready(disp);
-        if (disp->user_data != NULL)
+        TaskHandle_t *task_handle = lv_display_get_user_data(disp);
+        if (task_handle != NULL)
         {
-            vTaskNotifyGiveIndexedFromISR((TaskHandle_t)disp->user_data,
+            vTaskNotifyGiveIndexedFromISR(task_handle,
                                           1,
                                           &xHigherPriorityTaskWoken);
         }
