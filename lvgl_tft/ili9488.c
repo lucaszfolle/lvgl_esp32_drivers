@@ -137,7 +137,6 @@ void ili9488_flush(lv_display_t * disp, const lv_area_t * area, uint8_t * px_map
 		/* Starts from the last pixel, storing the result from the half-buffer's end */
 		uint8_t *p_dstbuf = (px_map + ((p_display->buf_1->data_size * 3) / 2));
 		p_buf16 += size;
-		p_flush_start = px_map;
 		for (uint32_t ii = 0u; ii < size; ++ii)
 		{
     		const uint32_t color = *--p_buf16;
@@ -145,6 +144,7 @@ void ili9488_flush(lv_display_t * disp, const lv_area_t * area, uint8_t * px_map
 			*--p_dstbuf = (uint8_t) ((color & 0x07E0) >> 3);
 			*--p_dstbuf = (uint8_t) (((color & 0xF800) >> 8) | ((color & 0x8000) >> 13));
 		}
+		p_flush_start = p_dstbuf;
 	}
 	/* Currently sending the buffer 2 */
 	else if (px_map == p_display->buf_2->data)
