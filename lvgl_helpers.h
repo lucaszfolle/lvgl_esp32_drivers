@@ -138,6 +138,9 @@ void lvgl_driver_init(void);
 bool lvgl_spi_driver_init(int host, int miso_pin, int mosi_pin, int sclk_pin,
     int max_transfer_sz, int dma_channel, int quadwp_pin, int quadhd_pin);
 
+/* Sets the backlight duty-cycle in percentage */
+void lvgl_set_backlight(int percent);
+
 /**********************
  *      MACROS
  **********************/

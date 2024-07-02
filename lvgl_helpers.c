@@ -41,6 +41,8 @@
  *  STATIC VARIABLES
  **********************/
 
+static disp_backlight_h hbacklight = NULL;
+
 /**********************
  *      MACROS
  **********************/
@@ -69,7 +71,7 @@ void lvgl_driver_init(void)
         DISP_SPI_IO2, DISP_SPI_IO3);
 
     disp_spi_add_device(TFT_SPI_HOST);
-    disp_driver_init();
+    hbacklight = disp_driver_init();
 
 #if defined (CONFIG_LV_TOUCH_CONTROLLER_FT81X)
     touch_driver_init();
@@ -89,7 +91,7 @@ void lvgl_driver_init(void)
     disp_spi_add_device(TFT_SPI_HOST);
     tp_spi_add_device(TOUCH_SPI_HOST);
 
-    disp_driver_init();
+    hbacklight = disp_driver_init();
     touch_driver_init();
 
     return;
@@ -106,9 +108,9 @@ void lvgl_driver_init(void)
 
     disp_spi_add_device(TFT_SPI_HOST);
 
-    disp_driver_init();
+    hbacklight = disp_driver_init();
 #elif defined (CONFIG_LV_I2C_DISPLAY)
-    disp_driver_init();
+    hbacklight = disp_driver_init();
 #else
 #error "No protocol defined for display controller"
 #endif
@@ -180,4 +182,9 @@ bool lvgl_spi_driver_init(int host,
     assert(ret == ESP_OK);
 
     return ESP_OK != ret;
+}
+
+void lvgl_set_backlight(int percent)
+{
+    disp_backlight_set(hbacklight, percent);
 }
