@@ -19,7 +19,7 @@
 /*********************
  *      DEFINES
  *********************/
-#define TAG "ILI9488"
+#define TAG "lcd_driver"
 
 /**********************
  *      TYPEDEFS
