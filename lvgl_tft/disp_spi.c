@@ -109,6 +109,7 @@ void disp_spi_add_device_config(spi_host_device_t host, spi_device_interface_con
     devcfg->post_cb=spi_ready;
     esp_err_t ret=spi_bus_add_device(host, devcfg, &spi);
     assert(ret==ESP_OK);
+    gpio_set_drive_capability(devcfg->spics_io_num, GPIO_DRIVE_CAP_1);
 }
 
 void disp_spi_add_device(spi_host_device_t host)

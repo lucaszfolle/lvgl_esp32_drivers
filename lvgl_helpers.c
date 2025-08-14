@@ -181,6 +181,9 @@ bool lvgl_spi_driver_init(int host,
     esp_err_t ret = spi_bus_initialize(host, &buscfg, SPI_DMA_CH_AUTO);
     assert(ret == ESP_OK);
 
+    gpio_set_drive_capability(mosi_pin, GPIO_DRIVE_CAP_1);
+    gpio_set_drive_capability(sclk_pin, GPIO_DRIVE_CAP_1);
+
     return ESP_OK != ret;
 }
 

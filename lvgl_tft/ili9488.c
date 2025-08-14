@@ -97,6 +97,9 @@ void ili9488_init(void)
 #endif
   gpio_set_direction(ILI9488_RST, GPIO_MODE_OUTPUT);
 
+  gpio_set_drive_capability(ILI9488_RST, GPIO_DRIVE_CAP_1);
+  gpio_set_drive_capability(ILI9488_DC, GPIO_DRIVE_CAP_1);
+
   // Reset the display
   gpio_set_level(ILI9488_RST, 0);
   vTaskDelay(100 / portTICK_DELAY_MS);
